@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <parameters>
+        <parameter key="sphinx.indexer.class">MS\SphinxBundle\Services\Indexer\Indexer</parameter>
+        <parameter key="sphinx.class">MS\SphinxBundle\Services\Search\SphinxSearch</parameter>
+    </parameters>
+
+    <services>
+        <service id="sphinx.search" class="%sphinx.class%">
+            <argument>%sphinx.searchd.host%</argument>
+            <argument>%sphinx.searchd.port%</argument>
+            <argument>%sphinx.searchd.socket%</argument>
+            <argument>%sphinx.indexes%</argument>
+        </service>
+    </services>
+</container>

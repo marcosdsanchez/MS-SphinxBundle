@@ -1,7 +1,5 @@
-About SphinxsearchBundle
+About SphinxBundle
 ========================
-
-
 
 Installation:
 -------------
@@ -16,21 +14,19 @@ How you actually download the bundle is entirely up to you.  The easiest way is 
 ### Step 2: Configure the bundle
 
 ``` yaml
-sphinxsearch:
+sphinx:
     indexes:
-        Categories: %sphinxsearch_index_categories%
-        Items:      %sphinxsearch_index_items%
+        Categories: %sphinx_index_categories%
+        Items:      %sphinx_index_items%
     searchd:
-        host:   %sphinxsearch_host%
-        port:   %sphinxsearch_port%
-        socket: %sphinxsearch_socket%
-    indexer:
-        bin:    %sphinxsearch_indexer_bin%
+        host:   %sphinx_host%
+        port:   %sphinx_port%
+        socket: %sphinx_socket%
 ```
 
 At least one index must be defined, and you may define as many as you like.
 
-In the above sample configuration, `Categories` is used as a label for the index named `%sphinxsearch_index_categories%` (as defined in your `sphinxsearch.conf`).  This allows you to avoid having to hard code raw index names inside of your code.
+In the above sample configuration, `Categories` is used as a label for the index named `%sphinx_index_categories%` (as defined in your `sphinxsearch.conf`).  This allows you to avoid having to hard code raw index names inside of your code.
 
 
 
@@ -41,7 +37,7 @@ The most basic search, using the above configuration as an example, would be:
 
 ``` php
 $indexesToSearch = array('Items');
-$sphinxSearch = $this->get('search.sphinxsearch.search');
+$sphinxSearch = $this->get('sphinx.search');
 $searchResults = $sphinxSearch->search('search query', $indexesToSearch);
 ```
 
@@ -59,7 +55,7 @@ $options = array(
     'SKU' => 3,
   ),
 );
-$sphinxSearch = $this->get('search.sphinxsearch.search');
+$sphinxSearch = $this->get('sphinx.search');
 $sphinxSearch->setMatchMode(SPH_MATCH_EXTENDED2);
 $sphinxSearch->setFilter('disabled', array(1), true);
 $searchResults = $sphinxSearch->search('search query', $indexesToSearch, $options);
@@ -73,7 +69,7 @@ License:
 --------
 
 ```
-Copyright (c) 2012, Ryan Rogers
+Copyright (c) 2013, Marcos Sánchez
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

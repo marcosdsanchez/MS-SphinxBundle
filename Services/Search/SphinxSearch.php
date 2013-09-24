@@ -7,92 +7,27 @@ namespace MS\SphinxBundle\Services\Search;
  */
 class SphinxSearch
 {
-    /**
-     * @var string $host
-     */
-    private $host;
-
-    /**
-     * @var string $port
-     */
-    private $port;
-
-    /**
-     * @var string $socket
-     */
-    private $socket;
-
-    /**
-     * @var array $indexes
-     *
-     * $this->indexes should look like:
-     *
-     * $this->indexes = array(
-     *   'IndexLabel' => 'Index name as defined in sphinxsearch.conf',
-     *   ...,
-     * );
-     */
-    private $indexes;
-
-    /**
-     * @var \SphinxClient $sphinx
-     */
+    /** @var \SphinxClient $sphinx */
     private $sphinx;
+
+    /** @var array $idList */
+    private $idList = array();
+
+    /** @var integer $totalCount */
+    private $totalCount;
 
     /**
      * Constructor.
      *
-     * @param string $host    The server's host name/IP.
-     * @param string $port    The port that the server is listening on.
-     * @param string $socket  The UNIX socket that the server is listening on.
-     * @param array  $indexes The list of indexes that can be used.
+     * @param string $host The server's host name/IP.
+     * @param string $port The port that the server is listening on.
      */
-    public function __construct($host = 'localhost', $port = '9312', $socket = null, array $indexes = array())
+    public function __construct($host = 'localhost', $port = '9312')
     {
         require_once __DIR__ . '/SphinxAPI.php';
 
-        $this->host = $host;
-        $this->port = $port;
-        $this->socket = $socket;
-        $this->indexes = $indexes;
-
         $this->sphinx = new \SphinxClient();
-        $this->sphinx->setServer($this->host, $this->port);
-    }
-
-    /**
-     * Escape the supplied string.
-     *
-     * @param string $string The string to be escaped.
-     *
-     * @return string The escaped string.
-     */
-    public function escapeString($string)
-    {
-        return $this->sphinx->escapeString($string);
-    }
-
-    /**
-     * Set the desired match mode.
-     *
-     * @param int $mode The matching mode to be used.
-     */
-    public function setMatchMode($mode)
-    {
-        $this->sphinx->setMatchMode($mode);
-    }
-
-    /**
-     * Set limits on the range and number of results returned.
-     *
-     * @param int $offset The number of results to seek past.
-     * @param int $limit  The number of results to return.
-     * @param int $max    The maximum number of matches to retrieve.
-     * @param int $cutoff The cutoff to stop searching at.
-     */
-    public function setLimits($offset, $limit, $max = 0, $cutoff = 0)
-    {
-        $this->sphinx->setLimits($offset, $limit, $max, $cutoff);
+        $this->sphinx->setServer($host, $port);
     }
 
     /**
@@ -102,13 +37,14 @@ class SphinxSearch
      *
      * @return bool
      */
-    public function setLimitFromLimitInfo($limitInfo) {
-        if(!$limitInfo) {
+    public function setLimit($limitInfo)
+    {
+        if (!$limitInfo) {
             return;
         }
 
         list($offset, $limit) = explode(",", $limitInfo);
-        if(!$limit) {
+        if (!$limit) {
             $limit = $offset;
             $offset = 0;
         } else {
@@ -121,139 +57,75 @@ class SphinxSearch
     }
 
     /**
-     * Set weights for individual fields.  $weights should look like:
+     * @param string $search
+     * @param string $index
      *
-     * $weights = array(
-     *   'Normal field name' => 1,
-     *   'Important field name' => 10,
-     * );
+     * @todo  implement logging
      *
-     * @param array $weights Array of field weights.
+     * @return bool
      */
-    public function setFieldWeights(array $weights)
+    public function query($search, $index)
     {
-        $this->sphinx->setFieldWeights($weights);
-    }
+        $result = $this->sphinx->Query($search, $index);
+        if ($result === false) {
+//            $this->LogFail();
+            return false;
+        } else {
+            if ($this->sphinx->GetLastWarning()) {
+//                $this->LogWarning();
+            }
+            if (!empty($result["matches"])) {
+                $this->idList = array_keys($result["matches"]);
+            }
+            $this->totalCount = $result['total_found'];
 
-    /**
-     * Set the desired search filter.
-     *
-     * @param string $attribute The attribute to filter.
-     * @param array  $values    The values to filter.
-     * @param bool   $exclude   Is this an exclusion filter?
-     */
-    public function setFilter($attribute, $values, $exclude = false)
-    {
-        $this->sphinx->setFilter($attribute, $values, $exclude);
-    }
-
-    /**
-     * Reset all previously set filters.
-     */
-    public function resetFilters()
-    {
-        $this->sphinx->resetFilters();
-    }
-
-    /**
-     * Search for the specified query string.
-     *
-     * @param string $query       The query string that we are searching for.
-     * @param array  $indexes     The indexes to perform the search on.
-     * @param array  $options     The options for the query.
-     * @param bool   $escapeQuery Should the query string be escaped?
-     *
-     * @throws \RuntimeException
-     *
-     * @return array The results of the search.
-     */
-    public function search($query, array $indexes, array $options = array(), $escapeQuery = true)
-    {
-        if ($escapeQuery) {
-            $query = $this->sphinx->escapeString($query);
+            return true;
         }
+    }
 
-        /**
-         * Build the list of indexes to be queried.
-         */
-        $indexNames = '';
-        foreach ($indexes as &$label) {
-            if (isset($this->indexes[$label])) {
-                $indexNames .= $this->indexes[$label] . ' ';
+    /**
+     * @return array
+     */
+    public function getIdList()
+    {
+        return $this->idList;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTotalCount()
+    {
+        return $this->getTotalCount();
+    }
+
+    /**
+     * @param array $resultListById
+     *
+     * @return array
+     */
+    public function orderResults($resultListById)
+    {
+        $resultListOrdered = array();
+        foreach ($this->idList as $id) {
+            if (isset($resultListById[$id])) {
+                $resultListOrdered[] = $resultListById[$id];
             }
         }
 
-        /**
-         * If no valid indexes were specified, return an empty result set.
-         *
-         * FIXME: This should probably throw an exception.
-         */
-        if (empty($indexNames)) {
-            return array();
-        }
-
-        /**
-         * Set the offset and limit for the returned results.
-         */
-        if (isset($options['result_offset']) && isset($options['result_limit'])) {
-            $this->sphinx->setLimits($options['result_offset'], $options['result_limit']);
-        }
-
-        /**
-         * Weight the individual fields.
-         */
-        if (isset($options['field_weights'])) {
-            $this->sphinx->setFieldWeights($options['field_weights']);
-        }
-
-        /**
-         * Perform the query.
-         */
-        $results = $this->sphinx->query($query, $indexNames);
-        if ($results['status'] !== SEARCHD_OK ) {
-            throw new \RuntimeException(sprintf('Searching index "%s" for "%s" failed with error "%s".', $label, $query, $this->sphinx->getLastError()));
-        }
-
-        return $results;
+        return $resultListOrdered;
     }
 
     /**
-     * Adds a query to a multi-query batch using current settings.
+     * Magic method that acts as a wrapper for SphinxClient
      *
-     * @param string $query   The query string that we are searching for.
-     * @param array  $indexes The indexes to perform the search on.
-     */
-    public function addQuery($query, array $indexes)
-    {
-        $indexNames = '';
-        foreach ($indexes as &$label) {
-            if (isset($this->indexes[$label])) {
-                $indexNames .= $this->indexes[$label] . ' ';
-            }
-        }
-
-        if (!empty($indexNames)) {
-            $this->sphinx->addQuery($query, $indexNames);
-        }
-    }
-
-    /**
-     * Runs the currently batched queries, and returns the results.
+     * @param string $name      method name
+     * @param array  $arguments method arguments
      *
-     * @return array The results of the queries.
+     * @return mixed
      */
-    public function runQueries()
+    public function __call($name, $arguments)
     {
-        return $this->sphinx->runQueries();
-    }
-
-    /**
-     * Bind per-index weights by name
-     *
-     * @param array $weights
-     */
-    public function setIndexWeights(array $weights)
-    {
-        $this->sphinx->SetIndexWeights($weights);
+        return call_user_func_array(array($this->sphinx, $name), $arguments);
     }
 }

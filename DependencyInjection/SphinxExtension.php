@@ -10,41 +10,41 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 class SphinxExtension extends Extension
 {
-	public function load(array $configs, ContainerBuilder $container)
-	{
-		$processor = new Processor();
-		$configuration = new Configuration();
+    public function load(array $configs, ContainerBuilder $container)
+    {
+        $processor = new Processor();
+        $configuration = new Configuration();
 
-		$config = $processor->processConfiguration($configuration, $configs);
+        $config = $processor->processConfiguration($configuration, $configs);
 
-		$loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
+        $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
 
-		$loader->load('sphinx.xml');
+        $loader->load('sphinx.xml');
 
-		/**
-		 * Indexer.
-		 */
-		if( isset($config['indexer']) ) {
-			$container->setParameter('sphinx.indexer.bin', $config['indexer']['bin']);
-		}
+        /**
+         * Indexer.
+         */
+        if( isset($config['indexer']) ) {
+            $container->setParameter('sphinx.indexer.bin', $config['indexer']['bin']);
+        }
 
-		/**
-		 * Indexes.
-		 */
-		$container->setParameter('sphinx.indexes', $config['indexes']);
+        /**
+         * Indexes.
+         */
+        $container->setParameter('sphinx.indexes', $config['indexes']);
 
-		/**
-		 * Searchd.
-		 */
-		if( isset($config['searchd']) ) {
-			$container->setParameter('sphinx.searchd.host', $config['searchd']['host']);
-			$container->setParameter('sphinx.searchd.port', $config['searchd']['port']);
-			$container->setParameter('sphinx.searchd.socket', $config['searchd']['socket']);
-		}
-	}
+        /**
+         * Searchd.
+         */
+        if( isset($config['searchd']) ) {
+            $container->setParameter('sphinx.searchd.host', $config['searchd']['host']);
+            $container->setParameter('sphinx.searchd.port', $config['searchd']['port']);
+            $container->setParameter('sphinx.searchd.socket', $config['searchd']['socket']);
+        }
+    }
 
-	public function getAlias()
-	{
-		return 'sphinx';
-	}
+    public function getAlias()
+    {
+        return 'sphinx';
+    }
 }

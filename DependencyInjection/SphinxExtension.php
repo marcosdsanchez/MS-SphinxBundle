@@ -22,13 +22,6 @@ class SphinxExtension extends Extension
         $loader->load('sphinx.xml');
 
         /**
-         * Indexer.
-         */
-        if( isset($config['indexer']) ) {
-            $container->setParameter('sphinx.indexer.bin', $config['indexer']['bin']);
-        }
-
-        /**
          * Indexes.
          */
         $container->setParameter('sphinx.indexes', $config['indexes']);
